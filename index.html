@@ -3,196 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#6457e8" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="NowTask" />
+<meta name="description" content="判斷現在是否應該執行某個任務的行動決策系統" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
 <title>NowTask 決策引擎</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #f7f7f8;
-    --surface: #ffffff;
-    --surface2: #f3f3f5;
-    --border: rgba(0,0,0,0.08);
-    --border-hover: rgba(0,0,0,0.16);
-    --text: #18181b;
-    --text-muted: #71717a;
-    --text-dim: #a1a1aa;
-    --accent: #6457e8;
-    --accent-dim: rgba(100,87,232,0.08);
-    --accent-hover: #5448d4;
-    --now-color: #16a34a;
-    --now-bg: #f0fdf4;
-    --now-border: #bbf7d0;
-    --later-color: #b45309;
-    --later-bg: #fffbeb;
-    --later-border: #fde68a;
-    --switch-color: #1d4ed8;
-    --switch-bg: #eff6ff;
-    --switch-border: #bfdbfe;
-    --radius: 10px;
-    --radius-lg: 16px;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Sora', sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 2rem 1rem 4rem;
-  }
-
-  .container { width: 100%; max-width: 600px; animation: fadeUp 0.45s ease both; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .header { margin-bottom: 1.75rem; padding-top: 0.5rem; }
-  .header-eyebrow {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.18em;
-    color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
-  }
-  .header h1 {
-    font-size: 22px; font-weight: 600;
-    letter-spacing: -0.02em; color: var(--text); line-height: 1.2;
-  }
-  .header p {
-    font-size: 13px; color: var(--text-muted);
-    margin-top: 5px; font-weight: 300; line-height: 1.6;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 1.25rem 1.5rem;
-    margin-bottom: 10px;
-  }
-
-  .section-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--text-dim);
-    margin-bottom: 12px;
-  }
-
-  input[type="text"], textarea {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-size: 14px; font-family: 'Sora', sans-serif;
-    color: var(--text); outline: none;
-    transition: border-color 0.15s; resize: none;
-  }
-  input[type="text"]:focus, textarea:focus { border-color: var(--accent); }
-  input[type="text"]::placeholder, textarea::placeholder { color: var(--text-dim); }
-  textarea { height: 58px; }
-  .input-stack { display: flex; flex-direction: column; gap: 8px; }
-
-  .pill-group { margin-bottom: 1rem; }
-  .pill-group:last-child { margin-bottom: 0; }
-  .pill-group-label {
-    font-size: 11px; font-weight: 500; color: var(--text-muted);
-    margin-bottom: 7px; display: block;
-  }
-  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
-  .pill-btn {
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 5px 13px;
-    font-size: 12px; font-family: 'Sora', sans-serif;
-    background: var(--surface2); color: var(--text-muted);
-    cursor: pointer; transition: all 0.13s;
-    white-space: nowrap; font-weight: 400;
-  }
-  .pill-btn:hover { border-color: var(--border-hover); color: var(--text); background: #fff; }
-  .pill-btn.active {
-    background: var(--accent-dim);
-    border-color: var(--accent);
-    color: var(--accent);
-    font-weight: 500;
-  }
-
-  .alt-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
-  .alt-row span { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-
-  .submit-btn {
-    width: 100%; padding: 13px; border-radius: var(--radius);
-    border: none; background: var(--accent); color: #fff;
-    font-size: 14px; font-family: 'Sora', sans-serif; font-weight: 500;
-    cursor: pointer; transition: all 0.15s; letter-spacing: -0.01em;
-    margin-top: 2px;
-  }
-  .submit-btn:hover { background: var(--accent-hover); }
-  .submit-btn:active { transform: scale(0.99); }
-
-  .result-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius-lg); padding: 1.5rem;
-    display: none; margin-top: 10px;
-    animation: fadeUp 0.3s ease both;
-  }
-  .result-card.visible { display: block; }
-
-  .decision-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    border-radius: 8px; padding: 6px 14px;
-    font-size: 13px; font-weight: 600; letter-spacing: 0.03em;
-    margin-bottom: 1rem; font-family: 'DM Mono', monospace;
-    border: 1px solid;
-  }
-  .badge-dot { width: 7px; height: 7px; border-radius: 50%; }
-  .badge-NOW    { background: var(--now-bg);    color: var(--now-color);    border-color: var(--now-border); }
-  .badge-NOW    .badge-dot { background: var(--now-color); }
-  .badge-LATER  { background: var(--later-bg);  color: var(--later-color);  border-color: var(--later-border); }
-  .badge-LATER  .badge-dot { background: var(--later-color); }
-  .badge-SWITCH { background: var(--switch-bg); color: var(--switch-color); border-color: var(--switch-border); }
-  .badge-SWITCH .badge-dot { background: var(--switch-color); }
-
-  .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
-  .score-track { flex: 1; height: 4px; border-radius: 2px; background: var(--surface2); overflow: hidden; }
-  .score-fill { height: 100%; border-radius: 2px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; }
-  .score-num { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); min-width: 44px; text-align: right; }
-
-  .result-section { margin-bottom: 1rem; }
-  .result-section:last-child { margin-bottom: 0; }
-  .result-lbl {
-    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px;
-  }
-  .result-val { font-size: 13px; color: var(--text); line-height: 1.65; font-weight: 300; }
-
-  .breakdown-tag {
-    display: inline-block; border-radius: 6px;
-    padding: 3px 10px; font-size: 11px; font-weight: 500;
-    font-family: 'DM Mono', monospace; border: 1px solid;
-  }
-  .breakdown-yes { background: var(--later-bg); color: var(--later-color); border-color: var(--later-border); }
-  .breakdown-no  { background: var(--now-bg);   color: var(--now-color);   border-color: var(--now-border); }
-
-  .divider { height: 1px; background: var(--border); margin: 1rem 0; }
-
-  .error-msg {
-    font-size: 12px; color: #dc2626;
-    background: #fef2f2; border: 1px solid #fecaca;
-    border-radius: var(--radius); padding: 8px 12px; margin-top: 8px;
-  }
-
-  footer {
-    text-align: center; margin-top: 2rem;
-    font-size: 11px; color: var(--text-dim);
-    font-family: 'DM Mono', monospace; letter-spacing: 0.06em;
-  }
-</style>
+<link rel="stylesheet" href="./style.css" />
 </head>
 <body>
 <div class="container">
@@ -203,7 +26,6 @@
     <p>判斷現在是否應該執行某個任務。不是待辦清單，是行動決策系統。</p>
   </div>
 
-  <!-- Task info -->
   <div class="card">
     <div class="section-label">任務資訊</div>
     <div class="input-stack">
@@ -212,7 +34,6 @@
     </div>
   </div>
 
-  <!-- Options -->
   <div class="card">
     <div class="section-label">當下狀態與任務參數</div>
 
@@ -293,7 +114,6 @@
 
   <div id="error-area"></div>
 
-  <!-- Result -->
   <div class="result-card" id="result-card">
     <div id="decision-badge" class="decision-badge">
       <span class="badge-dot"></span>
@@ -321,140 +141,6 @@
 
   <footer>NowTask Decision Engine · v1.0</footer>
 </div>
-
-<script>
-  const sel = {
-    mode: 'focused', time: '1week', impact: 'medium',
-    value: 'medium', state: 'ok', focus: 'medium', hasAlt: 'no'
-  };
-
-  // Pill selection
-  document.querySelectorAll('.pill-row').forEach(row => {
-    row.addEventListener('click', e => {
-      const btn = e.target.closest('.pill-btn');
-      if (!btn) return;
-      row.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      sel[row.dataset.group] = btn.dataset.val;
-      if (row.dataset.group === 'hasAlt') {
-        document.getElementById('alt-row').style.display = btn.dataset.val === 'yes' ? 'flex' : 'none';
-      }
-    });
-  });
-
-  // Decision logic
-  function decide() {
-    const title = document.getElementById('task-title').value.trim();
-    document.getElementById('error-area').innerHTML = '';
-    if (!title) {
-      document.getElementById('error-area').innerHTML = '<div class="error-msg">請先輸入任務名稱</div>';
-      return;
-    }
-
-    const { mode, time, impact, value, state, focus, hasAlt } = sel;
-    const altTask = document.getElementById('alt-task').value.trim();
-
-    // Score calculation
-    const timeScore  = { today: 40, '3days': 25, '1week': 10, none: 0 }[time] ?? 0;
-    const impactScore= { high: 25, medium: 15, low: 5, minimal: 0 }[impact] ?? 0;
-    const valueScore = { high: 20, medium: 12, low: 4, none: 0 }[value] ?? 0;
-    const stateScore = { very_good: 15, ok: 10, unwilling: 2, bad: 0 }[state] ?? 0;
-    const focusPenalty = (focus === 'high' && (mode === 'tired' || mode === 'chill')) ? -15 : 0;
-    const altPenalty   = hasAlt === 'yes' ? -10 : 0;
-
-    const raw = timeScore + impactScore + valueScore + stateScore + focusPenalty + altPenalty;
-    const score = Math.min(100, Math.max(0, raw));
-
-    // Decision
-    let decision, reason, suggestion, breakdown;
-
-    const stateOk    = state === 'very_good' || state === 'ok';
-    const highImpactValue = impact === 'high' && value === 'high';
-    const badState   = state === 'unwilling' || state === 'bad';
-    const focusMismatch = focus === 'high' && (mode === 'tired' || mode === 'chill');
-    const hasHigherAlt  = hasAlt === 'yes' && (value === 'low' || value === 'none' || impact === 'low' || impact === 'minimal');
-
-    if (hasHigherAlt) {
-      decision = 'SWITCH';
-      reason = altTask
-        ? `「${altTask}」優先度更高，先切換過去。`
-        : '有更值得做的替代任務，先切換。';
-      suggestion = altTask ? `先執行「${altTask}」` : '先處理替代任務';
-    } else if ((time === 'today' && stateOk) || (highImpactValue && stateOk && hasAlt === 'no')) {
-      decision = 'NOW';
-      reason = time === 'today'
-        ? '今天截止且狀態足夠，立即執行避免風險。'
-        : '影響與價值雙高，現在是好時機。';
-      suggestion = null;
-    } else if (badState || focusMismatch || time !== 'today') {
-      decision = 'LATER';
-      if (badState) {
-        reason = '當下狀態不佳，勉強執行效率低。';
-        suggestion = '休息或切換到低負擔任務，等狀態回升再做。';
-      } else if (focusMismatch) {
-        reason = '任務需要高專注，但當下模式不適合。';
-        suggestion = '等進入專注模式後再處理。';
-      } else {
-        reason = '時間壓力不緊迫，不需要現在處理。';
-        suggestion = '排進明天或本週計畫，不用現在分心。';
-      }
-    } else {
-      decision = 'LATER';
-      reason = '條件普通，沒有強烈理由現在執行。';
-      suggestion = '放入待處理，等更合適的時機。';
-    }
-
-    // Breakdown suggestion
-    const isLargeTask = document.getElementById('task-desc').value.trim().length > 30
-      || title.length > 20;
-    if (decision === 'NOW' && focus === 'high' && isLargeTask) {
-      breakdown = { yes: true, note: '任務較大，建議先拆出第一步再執行。' };
-    } else if (decision === 'LATER' && (impact === 'high' || value === 'high')) {
-      breakdown = { yes: true, note: '拆解成小步驟，下次更容易啟動。' };
-    } else {
-      breakdown = { yes: false, note: '' };
-    }
-
-    renderResult({ decision, score, reason, suggestion, breakdown });
-  }
-
-  function renderResult({ decision, score, reason, suggestion, breakdown }) {
-    const card = document.getElementById('result-card');
-    card.classList.add('visible');
-
-    const badgeMap = { NOW: 'badge-NOW', LATER: 'badge-LATER', SWITCH: 'badge-SWITCH' };
-    const labelMap = { NOW: 'NOW — 立即執行', LATER: 'LATER — 稍後處理', SWITCH: 'SWITCH — 換個任務' };
-    const colorMap = { NOW: '#16a34a', LATER: '#b45309', SWITCH: '#1d4ed8' };
-
-    const badge = document.getElementById('decision-badge');
-    badge.className = 'decision-badge ' + (badgeMap[decision] || 'badge-LATER');
-    document.getElementById('badge-text').textContent = labelMap[decision] || decision;
-
-    document.getElementById('score-num').textContent = score + ' / 100';
-    const fill = document.getElementById('score-fill');
-    fill.style.background = colorMap[decision] || '#888';
-    fill.style.width = '0%';
-    setTimeout(() => { fill.style.width = score + '%'; }, 50);
-
-    document.getElementById('reason-val').textContent = reason;
-
-    const suggSec = document.getElementById('suggestion-section');
-    if (suggestion) {
-      document.getElementById('suggestion-val').textContent = suggestion;
-      suggSec.style.display = 'block';
-    } else {
-      suggSec.style.display = 'none';
-    }
-
-    const bdEl = document.getElementById('breakdown-val');
-    bdEl.innerHTML =
-      `<span class="breakdown-tag ${breakdown.yes ? 'breakdown-yes' : 'breakdown-no'}">${breakdown.yes ? '建議拆解' : '不需拆解'}</span>`
-      + (breakdown.note ? `<span style="font-size:12px;color:var(--text-muted);margin-left:8px;">${breakdown.note}</span>` : '');
-
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  document.getElementById('decide-btn').addEventListener('click', decide);
-</script>
+<script src="./app.js"></script>
 </body>
 </html>
