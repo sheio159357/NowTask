@@ -7,8 +7,8 @@ if ('serviceWorker' in navigator) {
 
 // State
 const sel = {
-  mode: 'focused', time: '1week', impact: 'medium',
-  value: 'medium', state: 'ok', focus: 'medium', hasAlt: 'no'
+  mode: 'focused', time: '3days', impact: 'medium',
+  value: 'medium', focus: 'medium', hasAlt: 'no'
 };
 
 // Pill selection
@@ -37,27 +37,24 @@ function decide() {
     return;
   }
 
-  const { mode, time, impact, value, state, focus, hasAlt } = sel;
+  const { mode, time, impact, value, focus, hasAlt } = sel;
   const altTask = document.getElementById('alt-task').value.trim();
 
   // Score
-  const timeScore   = { today: 40, '3days': 25, '1week': 10, none: 0 }[time] ?? 0;
+  const timeScore   = { today: 40, '3days': 25, '30days': 10, later: 0 }[time] ?? 0;
   const impactScore = { high: 25, medium: 15, low: 5, minimal: 0 }[impact] ?? 0;
-  const valueScore  = { high: 20, medium: 12, low: 4, none: 0 }[value] ?? 0;
-  const stateScore  = { very_good: 15, ok: 10, unwilling: 2, bad: 0 }[state] ?? 0;
+  const valueScore  = { high: 20, medium: 12, low: 4, minimal: 0 }[value] ?? 0;
   const focusPenalty = (focus === 'high' && (mode === 'tired' || mode === 'chill')) ? -15 : 0;
   const altPenalty   = hasAlt === 'yes' ? -10 : 0;
   const score = Math.min(100, Math.max(0,
-    timeScore + impactScore + valueScore + stateScore + focusPenalty + altPenalty
+    timeScore + impactScore + valueScore + focusPenalty + altPenalty
   ));
 
   // Decision
-  const stateOk       = state === 'very_good' || state === 'ok';
-  const highBoth      = impact === 'high' && value === 'high';
-  const badState      = state === 'unwilling' || state === 'bad';
+  const highBoth     = impact === 'high' && value === 'high';
+  const lowValue     = value === 'low' || value === 'minimal';
   const focusMismatch = focus === 'high' && (mode === 'tired' || mode === 'chill');
-  const hasHigherAlt  = hasAlt === 'yes' &&
-    (value === 'low' || value === 'none' || impact === 'low' || impact === 'minimal');
+  const hasHigherAlt  = hasAlt === 'yes' && (lowValue || impact === 'low' || impact === 'minimal');
 
   let decision, reason, suggestion;
 
@@ -67,23 +64,23 @@ function decide() {
       ? `「${altTask}」優先度更高，先切換過去。`
       : '有更值得做的替代任務，先切換。';
     suggestion = altTask ? `先執行「${altTask}」` : '先處理替代任務';
-  } else if ((time === 'today' && stateOk) || (highBoth && stateOk && hasAlt === 'no')) {
+  } else if (time === 'today' || (highBoth && hasAlt === 'no')) {
     decision = 'NOW';
     reason = time === 'today'
-      ? '今天截止且狀態足夠，立即執行避免風險。'
+      ? '今天截止，立即執行避免風險。'
       : '影響與價值雙高，現在是好時機。';
     suggestion = null;
   } else {
     decision = 'LATER';
-    if (badState) {
-      reason = '當下狀態不佳，勉強執行效率低。';
-      suggestion = '休息或切換到低負擔任務，等狀態回升再做。';
-    } else if (focusMismatch) {
+    if (focusMismatch) {
       reason = '任務需要高專注，但當下模式不適合。';
       suggestion = '等進入專注模式後再處理。';
+    } else if (time === 'later') {
+      reason = '時間充裕，暫時不需要佔用注意力。';
+      suggestion = '放入長期清單，30 天內再重新評估。';
     } else {
       reason = '時間壓力不緊迫，不需要現在處理。';
-      suggestion = '排進明天或本週計畫，不用現在分心。';
+      suggestion = '排進本週計畫，不用現在分心。';
     }
   }
 
