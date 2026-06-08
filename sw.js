@@ -1,4 +1,4 @@
-const CACHE = 'nowtask-v3';
+const CACHE = 'nowtask-v4';
 const ASSETS = [
   './index.html',
   './style.css',
